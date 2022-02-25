@@ -13,6 +13,7 @@ from pytimeparse.timeparse import timeparse
 
 
 class ExtendedThrottle(throttling.UserRateThrottle):
+    scope = "user"
 
     def parse_rate(rate):
         if rate is None:
@@ -22,24 +23,24 @@ class ExtendedThrottle(throttling.UserRateThrottle):
         duration = timeparse(period)
         return (num_requests, duration)
 
-    parse_rate('2/5m')
+    # parse_rate('2/5m')
 
-class UserMinuteThrottle(throttling.UserRateThrottle):
-    # scope = "scope_name"
+# class UserMinuteThrottle(throttling.UserRateThrottle):
+#     scope = "user"
+#
+#     def parse_rate(self, rate):
+#
+#         num, period = rate.split('/')
+#         num_requests = int(num)
+#         return (num_requests, period*60)
 
-    def parse_rate(self, rate):
-
-        num, period = rate.split('/')
-        num_requests = int(num)
-        return (num_requests, period*60)
-
-    parse_rate('2/5')
+    # parse_rate('2/5')
 
 
 class StudentModelViewset(viewsets.ModelViewSet):
     def get_throttles(self):
         if self.action == 'create':
-            throttle_classes = [UserMinuteThrottle]
+            throttle_classes = [ExtendedThrottle]
         else:
             throttle_classes = []  # No throttle for other actions
         return [throttle() for throttle in throttle_classes]
