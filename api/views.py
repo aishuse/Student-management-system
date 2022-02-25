@@ -1,9 +1,7 @@
-import random
-
 from django.contrib.auth import authenticate, login, logout
 from api.models import Student
 from api.serializers import StudentSerializer, LoginSerializer, UserCreationSerializer
-from rest_framework import status, authentication, permissions, generics, mixins
+from rest_framework import status, authentication, permissions, generics, mixins, throttling
 from rest_framework import viewsets
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.views import APIView
@@ -11,22 +9,37 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.throttling import BaseThrottle, UserRateThrottle
+from pytimeparse.timeparse import timeparse
 
 
-# class UserThrottle(UserRateThrottle):
-#
-#     def parse_rate(self, rate):
-#          return (2, 300)
+class ExtendedThrottle(throttling.UserRateThrottle):
 
-class UserThrottle(BaseThrottle):
+    def parse_rate(rate):
+        if rate is None:
+            return (None, None)
+        num, period = rate.split('/')
+        num_requests = int(num)
+        duration = timeparse(period)
+        return (num_requests, duration)
 
-    def allow_request(self, request, view):
+    parse_rate('2/5m')
 
-        return (1, 5)
+class UserMinuteThrottle(throttling.UserRateThrottle):
+    # scope = "scope_name"
+
+    def parse_rate(self, rate):
+
+        num, period = rate.split('/')
+        num_requests = int(num)
+        return (num_requests, period*60)
+
+    parse_rate('2/5')
+
+
 class StudentModelViewset(viewsets.ModelViewSet):
     def get_throttles(self):
         if self.action == 'create':
-            throttle_classes = [UserThrottle]
+            throttle_classes = [UserMinuteThrottle]
         else:
             throttle_classes = []  # No throttle for other actions
         return [throttle() for throttle in throttle_classes]
