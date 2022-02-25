@@ -12,16 +12,16 @@ from rest_framework.throttling import BaseThrottle, UserRateThrottle
 from pytimeparse.timeparse import timeparse
 
 
-class ExtendedThrottle(throttling.UserRateThrottle):
-    scope = "user"
-
-    def parse_rate(rate):
-        if rate is None:
-            return (None, None)
-        num, period = rate.split('/')
-        num_requests = int(num)
-        duration = timeparse(period)
-        return (num_requests, duration)
+# class ExtendedThrottle(throttling.UserRateThrottle):
+#     scope = "user"
+#
+#     def parse_rate(rate):
+#         if rate is None:
+#             return (None, None)
+#         num, period = rate.split('/')
+#         num_requests = int(num)
+#         duration = timeparse(period)
+#         return (num_requests, duration)
 
     # parse_rate('2/5m')
 
@@ -40,7 +40,7 @@ class ExtendedThrottle(throttling.UserRateThrottle):
 class StudentModelViewset(viewsets.ModelViewSet):
     def get_throttles(self):
         if self.action == 'create':
-            throttle_classes = [ExtendedThrottle]
+            throttle_classes = [UserRateThrottle]
         else:
             throttle_classes = []  # No throttle for other actions
         return [throttle() for throttle in throttle_classes]
